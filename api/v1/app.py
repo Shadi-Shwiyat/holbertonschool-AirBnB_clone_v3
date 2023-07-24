@@ -12,6 +12,7 @@ app = Flask(__name__)
 # Register blueprint 'app_views' to Flask instance 'app'
 app.register_blueprint(app_views)
 
+
 @app.teardown_appcontext
 def teardown(self):
     """ Remove current SQLAlchemy session """
