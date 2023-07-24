@@ -20,6 +20,7 @@ def teardown(self):
     """ Remove current SQLAlchemy session """
     storage.close()
 
+
 @app.errorhandler(HTTPException)
 def not_found(error):
     """ Display 404 page if route not found """
