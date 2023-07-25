@@ -1,10 +1,16 @@
 #!/usr/bin/python3
 """ An instance of Flask for API """
 
-from flask import Flask
-from models import storage
 from api.v1.views import app_views
+<<<<<<< HEAD
 from os import getenv as env
+=======
+from flask import Flask, jsonify
+import requests
+from models import storage
+from werkzeug.exceptions import HTTPException
+from os import getenv
+>>>>>>> 2e708f5235d5a82cb50e43e5e5ce81a2eb1e2aa5
 
 
 # Create an instance of flask as app
@@ -17,6 +23,13 @@ app.register_blueprint(app_views)
 def teardown(self):
     """ Remove current SQLAlchemy session """
     storage.close()
+
+
+@app.errorhandler(HTTPException)
+def not_found(error):
+    """ Display 404 page if route not found """
+    return jsonify({"error": "Not found"}), 404
+
 
 if __name__ == '__main__':
     host = getenv('HBNB_API_HOST', '0.0.0.0')
