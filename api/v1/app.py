@@ -14,6 +14,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 # Register blueprint 'app_views' to Flask instance 'app'
 app.register_blueprint(app_views)
+# Cors
+cors = CORS(app, resources={r"/api/*": {"origins": "0.0.0.0"}})
 
 
 @app.teardown_appcontext
