@@ -1,16 +1,13 @@
 #!/usr/bin/python3
 """ An instance of Flask for API """
 
-from api.v1.views import app_views
-<<<<<<< HEAD
-from os import getenv as env
-=======
-from flask import Flask, jsonify
-import requests
+from flask import Flask
 from models import storage
-from werkzeug.exceptions import HTTPException
-from os import getenv
->>>>>>> 2e708f5235d5a82cb50e43e5e5ce81a2eb1e2aa5
+from api.v1.views import app_views
+from os import getenv  # to use environmental variables
+from flask import jsonify
+from werkzeug.exceptions import HTTPException  # to use errorhandler
+from flask_cors import CORS
 
 
 # Create an instance of flask as app
