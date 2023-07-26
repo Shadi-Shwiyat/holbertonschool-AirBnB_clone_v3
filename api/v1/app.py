@@ -2,11 +2,15 @@
 """ An instance of Flask for API """
 
 from api.v1.views import app_views
+<<<<<<< HEAD
+from os import getenv as env
+=======
 from flask import Flask, jsonify
 import requests
 from models import storage
 from werkzeug.exceptions import HTTPException
 from os import getenv
+>>>>>>> 2e708f5235d5a82cb50e43e5e5ce81a2eb1e2aa5
 
 
 # Create an instance of flask as app
