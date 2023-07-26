@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 """
-Contains the FileStorage class
+Contains the TestDBStorageDocs and TestDBStorage classes
 """
 
-import json
+from datetime import datetime
+import inspect
+import models
+from models.engine import db_storage
 from models.amenity import Amenity
 from models.base_model import BaseModel
 from models.city import City
@@ -11,83 +14,117 @@ from models.place import Place
 from models.review import Review
 from models.state import State
 from models.user import User
+import json
+import os
+import pep8
+import unittest
+DBStorage = db_storage.DBStorage
+classes = {"Amenity": Amenity, "City": City, "Place": Place,
+           "Review": Review, "State": State, "User": User}
 
-classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
-           "Place": Place, "Review": Review, "State": State, "User": User}
+
+class TestDBStorageDocs(unittest.TestCase):
+    """Tests to check the documentation and style of DBStorage class"""
+    @classmethod
+    def setUpClass(cls):
+        """Set up for the doc tests"""
+        cls.dbs_f = inspect.getmembers(DBStorage, inspect.isfunction)
+
+    def test_pep8_conformance_db_storage(self):
+        """Test that models/engine/db_storage.py conforms to PEP8."""
+        pep8s = pep8.StyleGuide(quiet=True)
+        result = pep8s.check_files(['models/engine/db_storage.py'])
+        self.assertEqual(result.total_errors, 0,
+                         "Found code style errors (and warnings).")
+
+    def test_pep8_conformance_test_db_storage(self):
+        """Test tests/test_models/test_db_storage.py conforms to PEP8."""
+        pep8s = pep8.StyleGuide(quiet=True)
+        result = pep8s.check_files(['tests/test_models/test_engine/\
+test_db_storage.py'])
+        self.assertEqual(result.total_errors, 0,
+                         "Found code style errors (and warnings).")
+
+    def test_db_storage_module_docstring(self):
+        """Test for the db_storage.py module docstring"""
+        self.assertIsNot(db_storage.__doc__, None,
+                         "db_storage.py needs a docstring")
+        self.assertTrue(len(db_storage.__doc__) >= 1,
+                        "db_storage.py needs a docstring")
+
+    def test_db_storage_class_docstring(self):
+        """Test for the DBStorage class docstring"""
+        self.assertIsNot(DBStorage.__doc__, None,
+                         "DBStorage class needs a docstring")
+        self.assertTrue(len(DBStorage.__doc__) >= 1,
+                        "DBStorage class needs a docstring")
+
+    def test_dbs_func_docstrings(self):
+        """Test for the presence of docstrings in DBStorage methods"""
+        for func in self.dbs_f:
+            self.assertIsNot(func[1].__doc__, None,
+                             "{:s} method needs a docstring".format(func[0]))
+            self.assertTrue(len(func[1].__doc__) >= 1,
+                            "{:s} method needs a docstring".format(func[0]))
 
 
-class FileStorage:
-    """serializes instances to a JSON file & deserializes back to instances"""
+class TestFileStorage(unittest.TestCase):
+    """Test the FileStorage class"""
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_all_returns_dict(self):
+        """Test that all returns a dictionaty"""
+        self.assertIs(type(models.storage.all()), dict)
 
-    # string - path to the JSON file
-    __file_path = "file.json"
-    # dictionary - empty but will store all objects by <class name>.id
-    __objects = {}
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_all_no_class(self):
+        """Test that all returns all rows when no class is passed"""
 
-    def all(self, cls=None):
-        """returns the dictionary __objects"""
-        if cls is not None:
-            new_dict = {}
-            for key, value in self.__objects.items():
-                if cls == value.__class__ or cls == value.__class__.__name__:
-                    new_dict[key] = value
-            return new_dict
-        return self.__objects
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_new(self):
+        """test that new adds an object to the database"""
 
-    def new(self, obj):
-        """sets in __objects the obj with key <obj class name>.id"""
-        if obj is not None:
-            key = obj.__class__.__name__ + "." + obj.id
-            self.__objects[key] = obj
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_save(self):
+        """Test that save properly saves objects to file.json"""
 
-    def save(self):
-        """serializes __objects to the JSON file (path: __file_path)"""
-        json_objects = {}
-        for key in self.__objects:
-            json_objects[key] = self.__objects[key].to_dict()
-        with open(self.__file_path, 'w') as f:
-            json.dump(json_objects, f)
 
-    def reload(self):
-        """deserializes the JSON file to __objects"""
-        try:
-            with open(self.__file_path, 'r') as f:
-                jo = json.load(f)
-            for key in jo:
-                self.__objects[key] = classes[jo[key]["__class__"]](**jo[key])
-        except:
-            pass
+class TestDBStorage(unittest.TestCase):
+    """UnitTests for DBStorage"""
 
-    def delete(self, obj=None):
-        """delete obj from __objects if it’s inside"""
-        if obj is not None:
-            key = obj.__class__.__name__ + '.' + obj.id
-            if key in self.__objects:
-                del self.__objects[key]
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_get(self):
+        ''' Testear que obtenga un objeto especifico o None '''
+        ins = State(name="New York")
+        ins.save()
+        user = User(email="capo@gmail.com", password="root")
+        user.save()
+        self.assertIs(None, models.storage.get("State", "hola"))
+        self.assertIs(None, models.storage.get("hola", "hola"))
+        self.assertIs(ins, models.storage.get("User", user.id))
 
-    def close(self):
-        """call reload() method for deserializing the JSON file to objects"""
-        self.reload()
+    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
+    def test_count(selft):
+        ''' Testear que nuevos objetos se esten añadiendo a la db '''
+        count = models.storage.count()
+        self.assertEqual(models.storage.count("hola"), 0)
+        ins = State(name="New York")
+        ins.save()
+        user = User(email="capo@gmail.com", password="root")
+        user.save()
+        self.assertEqual(models.storage.count("State"), count + 1)
+        self.assertEqual(models.storage.count(), count + 2)
 
-    def get(self, cls, id):
-        """ retrieves an object (successfully) """
-        self.reload()
-        try:
-            obj = self.__objects[f"{cls.__name__}.{id}"]
-        except KeyError:
-            obj = None
-        self.save()
-        return obj
+    def test_db_storage_get(self):
+        ''' Check if instance gotten for DBStorage '''
+        new_o = State(name="Salo")
+        obj = storage.get("State", "none_id")
+        self.assertIsNone(obj)
 
-    def count(self, cls=None):
-        """ counts the number of objects in storage (successfully) """
-        self.reload()
-        if cls is not None:
-            count = 0
-            for key in self.__objects:
-                if self.__objects[key].__class__ == cls:
-                    count += 1
-        else:
-            count = len(self.__objects)
-        self.save()
-        return count
+    def test_db_storage_count(self):
+        ''' Check total count of objs in DBStorage '''
+        storage.reload()
+        all_count = storage.count(None)
+        self.assertIsInstance(all_count, int)
+        cls_count = storage.count("State")
+        self.assertIsInstance(cls_count, int)
+        self.assertGreaterEqual(all_count, cls_count)
